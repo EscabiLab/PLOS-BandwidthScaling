@@ -8,17 +8,17 @@ Fengrong He, Ian H. Stevenson, Monty A. Escabi
 
 ## Setup 
 
-This is a Matlab based project, tested in Matlab R2017b and higher. 
+This is a Matlab project, created in Matlab R2017b. 
 
-All necessary codes are included, please add the folder "functions" and its subfolders to the path before use.
+Please add the folder "functions" and its subfolders to the path before using.
 
-Please run the demo in the folder containing: "Example.m".
+Please run the demo inside the folder containing: "Example.m".
 
 ## Brief Introduction
 
 1. Example.m 
 
-This is a demo code. It uses a speech sound as an example, calculating the modulation power spectrum for three models (Fourier Spectrogram MPS, Cochlear Spectrogram MPS and Midbrain Model MPS) and plotted in the same way as in the paper (Fig. 7) 
+This is a demo code. It uses a speech sound as an example, calculating the modulation power spectrums for three models (Fourier Spectrogram MPS, Cochlear Spectrogram MPS and Midbrain Model MPS) and plotted in the same way as in the paper (Fig. 7) 
 
 2. The sounds folder
 
