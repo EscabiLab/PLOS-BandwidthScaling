@@ -1,9 +1,9 @@
 %
-%function [CochData]=cochleogram(data,Fs,dX,f1,fN,Fm,OF,Norm,dis,ATT,FiltType,BWType,NLType,ModFiltType)
+%function [CochData]=cochleogram(data,Fs,dX,f1,fN,Fm,OF,Norm,dis,ATT,FiltType,BWType,NLType,ModFiltType,CenterdB,ONLType,ONLBeta)
 %	
-%	FILE NAME 	: COCHLEOGRAN
-%	DESCRIPTION : Spectro-temporal signal representation obtained 
-%                 by applying a octave spaced filterbank and
+%   FILE NAME   : COCHLEOGRAN
+%   DESCRIPTION : Cochlear model spectro-temporal signal representation
+%                 obtained by applying a octave spaced filterbank and
 %                 extracting envelope modulation signal. Uses critical
 %                 bandwidth Gamma tone filters for the auditory
 %                 model decomposition.
@@ -44,6 +44,22 @@
 %   ModFiltType : Modualtion lowpass filter type - either a transitional
 %                 windowed filter ('win', Roark and Escabi 1999) or a time-domain
 %                 b-spline filter ('bspline') - Default=='win'
+%   CenterdB    : Center the dB amplitudes by subtractint the mean
+%                 (Optional, Default == true)
+%   ONLType     : Type of output nonlinearity: 'dB' (dB Amplitudes), 'dBR'
+%                 (rescaled/rectified  dB amplitudes). Default == 'dB'.
+%                 For 'dBR' amplitudes are remaped using an inverse 
+%                 cumulative gaussion distribution mehtod to normalize the
+%                 amplitudes. This compressive nonlinearity remaps the
+%                 original cochleogram amplitudes (in dB) so that they are 
+%                 bounded between 0 and 1.
+%   ONLBeta     : Output nonlinearity parameter vector for 'dBR' output
+%                 nonlinearity. ONLBeta(1) is the mean of the cumulative 
+%                 Gaussian and ONLBeta(2) is the STD. This parameter is 
+%                 required if ONLType=='dBR' is selected. The Mean and STD
+%                 are usually chosen by first analzying the probaility
+%                 distribution (mean and var) of the original sound
+%                 cochleograms ('dB' option).
 %
 %RETURNED VARIABLES
 %
@@ -75,13 +91,13 @@
 %             .BW           : Bandwidths for filterbank
 %             .Param        : Contains all of the input parameters
 %
-% (C) Monty A. Escabi, January 2008 (Edit June 2009, May/Sept 2016 , 2019 MAE/FH)
+% (C) Monty A. Escabi, January 2008 (Edit June 2009, May/Sept 2016 , 2019 MAE/FH, May 2022 MAE)
 %
-function [CochData]=cochleogram(data,Fs,dX,f1,fN,Fm,OF,Norm,dis,ATT,FiltType,BWType,NLType,ModFiltType)
+function [CochData]=cochleogram(data,Fs,dX,f1,fN,Fm,OF,Norm,dis,ATT,FiltType,BWType,NLType,ModFiltType,CenterdB,ONLType,ONLBeta)
 
 %Input Parameters
 if nargin<8 | isempty(Norm)
-    Norm='Amp';         %MAE, May 2018
+    Norm='Amp';                 %MAE, May 2018
 end
 if nargin<9 | isempty(dis)
 	dis='n';
@@ -101,6 +117,12 @@ end
 if nargin<14 | isempty(ModFiltType)
     ModFiltType='win';          %Added modulation bspline filter option - Aug 31, 2021, MAE
 end
+if nargin<15 | isempty(CenterdB)
+    CenterdB=true;
+end
+if nargin<16 | isempty(ONLType)
+    ONLType='SdB';              %Added ONLType option - May 6, 2022, MAE
+end
 
 %Finding frequency axis for chromatically spaced filter bank
 %Note that chromatic spacing requires : f(k) = f(k+1) * 2^dX
@@ -113,7 +135,7 @@ fc=f1*2.^Xc;
 %Finding filter characterisitic frequencies according to Greenwood
 %[fc]=greenwoodfc(20,20000,.1);
 
-%Finding filter bandwidhts assuming 1 critical band or ERB scale
+%Finding filter bandwidths - critical band or ERB scale
 if strcmp(BWType,'erb')
     BW=erb(fc);
 else
@@ -133,10 +155,10 @@ end
 Ne=(length(He)-1)/2;
 
 %Generating Filters 
-if strcmp(FiltType,'BSpline')       %Added B-Spline filter option
+if strcmp(FiltType,'BSpline')           %Added B-Spline filter option
     for k=1:length(fc)
         Disp='n';
-        f1b=fc(k)-BW(k)/2;          %Corrected f1 so that it does not get overwritten - MAE Feb. 2022
+        f1b=fc(k)-BW(k)/2;              %Corrected f1 so that it does not get overwritten - MAE Feb. 2022
         f2b=fc(k)+BW(k)/2;          
         TW=BW(k)*.10;    %Choose 10% of BW for TW
         [Filter(k).H] = bandpass(f1b,f2b,TW,Fs,ATT,Disp);
@@ -170,21 +192,18 @@ for k=1:length(fc)
     H=Filter(k).H;
     Hen=H/sqrt(sum(H.^2));
     NormGain(k)=sqrt(sum(H.^2))/sqrt(sum(Hen.^2));
-    if strcmp(Norm,'En')        %Edit Nov 2008, Escabi
-        H=Hen;                  %Equal Energy
+    if strcmp(Norm,'En')                %Edit Nov 2008, Escabi
+        H=Hen;                          %Equal Energy
     end
         
 	%Filtering at kth Scale
 	Y=convfft(data',H,0,NFFT,'y');      %Changed delayed from N(k) to zero
-     
-    %Spectral Amplitude Distribution
-    %Sf(k)=std(Y);
     
 	%Finding Envelope Using the Hilbert Transform or Linear rectification
     if strcmp(NLType,'hil')
-        Y=abs(hilbert(Y));  %Hilbert Envelope
+        Y=abs(hilbert(Y));              %Hilbert Envelope
     else
-        Y=max(0,Y);         %Linear rectification
+        Y=max(0,Y);                     %Linear rectification
     end
 
 	%Filtering The Envelope and Downsampling
@@ -213,21 +232,35 @@ SdB=20*log10(S);
 i=find(~isinf(SdB));
 MindB=min(SdB(i));
 i=find(isinf(SdB));
-SdB(i)=MindB*ones(size(SdB(i)));                %Remove values with -Inf - i.e., note that when S == 0 -> SdB=-Inf
-SdB=SdB-mean(mean(SdB));                        %Subtract Mean Value
+SdB(i)=MindB*ones(size(SdB(i)));        %Remove values with -Inf - i.e., note that when S == 0 -> SdB=-Inf
+if CenterdB
+    SdB=SdB-mean(mean(SdB));            %Center - Subtract Mean Value
+end
 
 %dB Cochleogram - corrected for group delay
 ScdB=20*log10(Sc);
 i=find(~isinf(ScdB));
 MindB=min(ScdB(i));
 i=find(isinf(ScdB));
-ScdB(i)=MindB*ones(size(ScdB(i)));                %Remove values with -Inf - i.e., note that when S == 0 -> SdB=-Inf
+ScdB(i)=MindB*ones(size(ScdB(i)));      %Remove values with -Inf - i.e., note that when S == 0 -> SdB=-Inf
+if CenterdB
+        ScdB=ScdB-mean(mean(ScdB));     %Center - Subtract Mean Value
+end
+
+%Applying output nonlinearity if selected
+if strcmp(ONLType,'dBR')
+    SdBR=normcdf(SdB,ONLBeta(1),ONLBeta(2));
+end
 
 %Storing as data structure
 CochData.S=S;
-CochData.SdB=SdB;
 CochData.Sc=Sc;
-CochData.ScdB=ScdB;
+if ~exist('SdBR')
+    CochData.SdB=SdB;
+    CochData.ScdB=ScdB;
+else
+    CochData.SdBR=SdBR;
+end
 CochData.Sf=Sf;
 CochData.taxis=taxis;
 CochData.faxis=faxis;
@@ -235,7 +268,7 @@ CochData.Norm=Norm;
 CochData.NormGain=NormGain;
 CochData.Filter=Filter;
 CochData.GroupDelay=GroupDelay;
-CochData.BW=BW;                  %MAE, May 2016
+CochData.BW=BW;                         %MAE, May 2016
 
 %Storing Input Paramaters
 CochData.Param.Fs=Fs;
@@ -251,3 +284,7 @@ CochData.Param.FiltType=FiltType;
 CochData.Param.BWType=BWType;
 CochData.Param.NLType=NLType;
 CochData.Param.ModFiltType=ModFiltType;
+CochData.Param.ONLType=ONLType;
+if exist('ONLBeta')
+    CochData.Param.ONLBeta=ONLBeta;
+end
