@@ -18,7 +18,7 @@ Please run the demo inside the folder containing: "Example.m".
 
 1. Example.m 
 
-This is a demo code. It uses a speech sound as an example, calculating the modulation power spectrums for three models (Fourier Spectrogram MPS, Cochlear Spectrogram MPS and Midbrain Model MPS) and plotted in the same way as in the paper (Fig. 7). The program also generates and plot the time-varuing auditory midbrain model represenation (midbrainogram) described in the manuscript. 
+This is a demo code. It uses a speech sound as an example, calculating the modulation power spectrums for three models (Fourier Spectrogram MPS, Cochlear Spectrogram MPS and Midbrain Model MPS) and plotted in the same way as in the paper (Fig. 7). The program also generates and plots the time-varuing auditory midbrain model represenation (midbrainogram) described in the manuscript. 
 
 2. The sounds folder
 
