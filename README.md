@@ -52,3 +52,4 @@ It has four sound representatives that we used in the paper: one for speech, one
 ![alt text](https://github.com/EscabiLab/PLOS-BandwidthScaling/blob/e49b42830315cb714a6f44f9705f074808cfc3dc/results/Midbrainogram.png)
 
 
+
