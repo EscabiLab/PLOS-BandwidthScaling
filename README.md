@@ -2,7 +2,7 @@
 
 This repository contains the codes and demos for our paper: 
 
-[Two stages of bandwidth scaling drives efficient neural coding of natural sounds](https://www.biorxiv.org/content/10.1101/2022.04.12.488076v1)
+[Two stages of bandwidth scaling drives efficient neural coding of natural sounds](https://doi.org/10.1371/journal.pcbi.1005996)
 
 Fengrong He, Ian H. Stevenson, Monty A. Escabi
 
