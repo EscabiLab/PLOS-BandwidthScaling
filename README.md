@@ -49,7 +49,7 @@ It has four sound representatives that we used in the paper: one for speech, one
 
 - Image for Midbrainogram model output:
 
-![alt text](https://github.com/escabi/PLOS-BandwidthScaling/blob/main/results/Midbrainrateogram.png)
+![alt text](https://github.com/escabi/PLOS-BandwidthScaling/blob/main/results/Midbrainogram.png)
 
 - Image for Midbrainrateogram model output (similar to above, but removes fine details and plots slow rate fluctuations):
 
